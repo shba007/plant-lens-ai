@@ -4,8 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pillow = "*"
-deeplake = {extras = ["visualizer"], version = "*"}
+tensorflowjs = "*"
 
 [dev-packages]
 

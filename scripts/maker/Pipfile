@@ -7,6 +7,8 @@ name = "pypi"
 tensorflow = "*"
 tensorflow-hub = "*"
 matplotlib = "*"
+deeplake = "*"
+scikit-learn = "*"
 
 [dev-packages]
 ipykernel = "*"

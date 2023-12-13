@@ -11,7 +11,7 @@
 		** Annotated Data **
 	3. Preprocessor
 		- sampling
-		- padding
+		- padding/cropping
 		- resizing
 		- normalizing
 		- splitting into training, testing dataset
