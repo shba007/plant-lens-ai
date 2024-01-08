@@ -6,7 +6,9 @@ name = "pypi"
 [packages]
 
 [dev-packages]
-ipykernel = "*"
 
 [requires]
 python_version = "3.11"
+
+[scripts]
+start = "python main.py"

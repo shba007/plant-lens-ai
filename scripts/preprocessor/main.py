@@ -71,6 +71,11 @@ def resize(image: Image.Image, dimensions: tuple[int, int]) -> Image.Image:
     return image.resize(dimensions)
 
 
+def channel_resize(image: Image.Image) -> Image.Image:
+    num_channels = len(image.getbands())
+    return image.convert('RGB') if num_channels == 1 else image
+
+
 def main():
     data = {}
 
@@ -110,7 +115,7 @@ def main():
 
     for dataset in ['training', 'testing']:
         # Create the dataset locally
-        ds = deeplake.empty(f'{DATASET_DATA_PATH}/{dataset}')
+        ds = deeplake.empty(f'{DATASET_DATA_PATH}/{dataset}', overwrite=True)
         data = training_dataset if dataset == 'training' else testing_dataset
 
         with ds:
@@ -128,9 +133,10 @@ def main():
                     file_path = f"{ANNOTATED_DATA_PATH}/{label}/{file}"
                     padded_image = pad(file_path, 1)
                     resized_image = resize(padded_image, DIMENSIONS)
+                    channel_resized_image = channel_resize(resized_image)
 
                     ds.append({'images': deeplake.read(save_image(
-                        resized_image, f"{label}-{file}")), 'labels': label_num})
+                        channel_resized_image, f"{label}-{file}")), 'labels': label_num})
 
             # commit_id = ds.commit('Added image of a cat')
             # print('Dataset in commit {} has {} samples'.format(commit_id, len(ds)))
