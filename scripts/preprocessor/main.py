@@ -3,7 +3,8 @@ import random
 
 from PIL import Image
 import deeplake
-
+import sys
+import math
 
 ROOT_PATH = "D:/Programming/Projects/Public/plant-lens/ai"
 ANNOTATED_DATA_PATH = f"{ROOT_PATH}/data/annotated"
@@ -92,31 +93,43 @@ def main():
                 data[label] = [file]
 
     data_classes = list(data.keys())
+    print(data_classes)
 
     get_data_info(data)
 
+    # sys.exit(0)
+
     training_dataset = {}
+    validation_dataset = {}
     testing_dataset = {}
-    split_ratio = 0.8
+    splits = [7, 1, 2]
 
     for label in data:
         items = data[label][:]
-        split_index = int(len(items) * split_ratio)
-
         random.shuffle(items)
+        items = items[:20]
 
-        training_dataset[label] = items[:split_index]
-        testing_dataset[label] = items[split_index:]
+        train_split_index = math.ceil(len(items) * splits[0]/sum(splits))
+        test_split_index = train_split_index + \
+            math.ceil(len(items) * splits[1]/sum(splits))
+
+        training_dataset[label] = items[:train_split_index]
+        validation_dataset[label] = items[train_split_index:test_split_index]
+        testing_dataset[label] = items[test_split_index:]
 
     print("\nTraining Dataset")
     get_data_info(training_dataset)
+    print("\nValidation Dataset")
+    get_data_info(validation_dataset)
     print("\nTesting Dataset")
     get_data_info(testing_dataset)
 
-    for dataset in ['training', 'testing']:
+    dataset_map = {'training': training_dataset,
+                   'validation': validation_dataset, 'testing': testing_dataset}
+
+    for dataset in ['training', 'validation', 'testing']:
         # Create the dataset locally
         ds = deeplake.empty(f'{DATASET_DATA_PATH}/{dataset}', overwrite=True)
-        data = training_dataset if dataset == 'training' else testing_dataset
 
         with ds:
             ds.create_tensor('images', htype='image',
@@ -127,9 +140,9 @@ def main():
             # ds.info.update(description='My first Deep Lake dataset')
             # ds.images.info.update(camera_type='SLR')
 
-            for label in data:
+            for label in dataset_map[dataset]:
                 label_num = data_classes.index(label)
-                for file in data[label]:
+                for file in dataset_map[dataset][label]:
                     file_path = f"{ANNOTATED_DATA_PATH}/{label}/{file}"
                     padded_image = pad(file_path, 1)
                     resized_image = resize(padded_image, DIMENSIONS)
