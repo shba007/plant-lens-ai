@@ -107,7 +107,6 @@ def main():
     for label in data:
         items = data[label][:]
         random.shuffle(items)
-        items = items[:20]
 
         train_split_index = math.ceil(len(items) * splits[0]/sum(splits))
         test_split_index = train_split_index + \
