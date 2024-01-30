@@ -3,12 +3,13 @@ import random
 
 from PIL import Image
 import deeplake
-import sys
 import math
+import sys
 
+DATASET_TYPE = "earring"
 ROOT_PATH = "D:/Programming/Projects/Public/plant-lens/ai"
-ANNOTATED_DATA_PATH = f"{ROOT_PATH}/data/annotated"
-DATASET_DATA_PATH = f"{ROOT_PATH}/data/dataset"
+ANNOTATED_DATA_PATH = f"{ROOT_PATH}/data/annotated/{DATASET_TYPE}"
+DATASET_DATA_PATH = f"{ROOT_PATH}/data/dataset/{DATASET_TYPE}"
 TEMP_DATA_PATH = f"{ROOT_PATH}/data/temp"
 DIMENSIONS = (224, 224)
 
@@ -18,6 +19,10 @@ def get_data_info(data):
     total = 0
     label_min = {"name": "", "count": 99999999}
     label_max = {"name": "", "count": -1}
+    label_count = {}
+    counts = list(map(lambda label: len(label), data.values()))
+    min(counts)
+    max(counts)
     for label in data:
         if (len(data[label]) < label_min["count"]):
             label_min["name"] = label
@@ -26,9 +31,10 @@ def get_data_info(data):
             label_max["name"] = label
             label_max["count"] = len(data[label])
 
-        total += len(data[label])
-        print({label: len(data[label])})
+        label_count[label] = len(data[label])
+        total += label_count[label]
 
+    # print(label_count)
     print("\nTotal", total, "\nMin Label",
           label_min, "\nMax Label", label_max)
 
@@ -81,10 +87,11 @@ def main():
     data = {}
 
     # Load all filepath into a labels dict
-    for root, dirs, files in os.walk(ANNOTATED_DATA_PATH):
+    ANNOTATED_DATA_IMAGE_PATH = f"{ANNOTATED_DATA_PATH}/images"
+    for root, dirs, files in os.walk(ANNOTATED_DATA_IMAGE_PATH):
         for file in files:
             full_path = os.path.normpath(root)
-            base_path = os.path.normpath(ANNOTATED_DATA_PATH)
+            base_path = os.path.normpath(ANNOTATED_DATA_IMAGE_PATH)
             label = full_path.split(base_path)[-1][1:]
 
             if label in data:
@@ -106,11 +113,17 @@ def main():
 
     for label in data:
         items = data[label][:]
+        items_count = len(items)
         random.shuffle(items)
 
-        train_split_index = math.ceil(len(items) * splits[0]/sum(splits))
-        test_split_index = train_split_index + \
-            math.ceil(len(items) * splits[1]/sum(splits))
+        if items_count < 3:
+            continue
+
+        train_split_index = - \
+            2 if items_count < 10 else math.ceil(
+                items_count * splits[0]/sum(splits))
+        test_split_index = -1 if items_count < 10 else train_split_index + \
+            math.ceil(items_count * splits[1]/sum(splits))
 
         training_dataset[label] = items[:train_split_index]
         validation_dataset[label] = items[train_split_index:test_split_index]
@@ -128,7 +141,8 @@ def main():
 
     for dataset in ['training', 'validation', 'testing']:
         # Create the dataset locally
-        ds = deeplake.empty(f'{DATASET_DATA_PATH}/{dataset}', overwrite=True)
+        ds = deeplake.empty(
+            f'{DATASET_DATA_PATH}/{dataset}', overwrite=True)
 
         with ds:
             ds.create_tensor('images', htype='image',
@@ -142,7 +156,7 @@ def main():
             for label in dataset_map[dataset]:
                 label_num = data_classes.index(label)
                 for file in dataset_map[dataset][label]:
-                    file_path = f"{ANNOTATED_DATA_PATH}/{label}/{file}"
+                    file_path = f"{ANNOTATED_DATA_PATH}/images/{label}/{file}"
                     padded_image = pad(file_path, 1)
                     resized_image = resize(padded_image, DIMENSIONS)
                     channel_resized_image = channel_resize(resized_image)
