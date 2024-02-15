@@ -6,7 +6,7 @@ import deeplake
 import math
 import sys
 
-DATASET_TYPE = "earring"
+DATASET_TYPE = "plant"
 ROOT_PATH = "D:/Programming/Projects/Public/plant-lens/ai"
 ANNOTATED_DATA_PATH = f"{ROOT_PATH}/data/annotated/{DATASET_TYPE}"
 DATASET_DATA_PATH = f"{ROOT_PATH}/data/dataset/{DATASET_TYPE}"
